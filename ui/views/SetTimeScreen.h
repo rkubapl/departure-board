@@ -1,0 +1,13 @@
+//
+// Created by Jakub Rajchel on 6/1/26.
+//
+
+#ifndef DEPARTUREDISPLAY_SETTIMESCREEN_H
+#define DEPARTUREDISPLAY_SETTIMESCREEN_H
+
+
+class SetTimeScreen {
+};
+
+
+#endif //DEPARTUREDISPLAY_SETTIMESCREEN_H

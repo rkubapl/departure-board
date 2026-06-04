@@ -1,6 +1,10 @@
 #include "TimetableLoader.h"
 #include <algorithm>
 #include <stdexcept>
+#include <format>
+#include <cstdio>
+#include <ctime>
+#include <optional>
 
 //note: what to do with exceptions? should they stay or remove them to reduce memory usage
 
@@ -21,6 +25,11 @@ public:
 };
 
 void TimetableLoader::load() {
+  if (!source.isOpen())
+    throw std::runtime_error("Failed to open the file");
+
+  source.seek(0);
+
   uint8_t header[24];
   if (source.read(header, 24) != 24)
     throw std::runtime_error("Failed to read file: header");
@@ -139,18 +148,53 @@ std::vector<selectStop> TimetableLoader::readStopsToSelect() {
   return stops;
 }
 
+std::optional<Departure> TimetableLoader::getDeparture(uint32_t offset, std::vector<bool> calendar, uint64_t unixDay) {
+  if (!source.seek(offset)) {
+    throw std::runtime_error("Failed to seek to trip info");
+  }
+
+  uint8_t tripData[21];
+  if (source.read(tripData, 21) != 21) {
+    throw std::runtime_error("Failed to read trip data");
+  }
+
+  uint32_t tripCalendarID = readU16LE(tripData + 11);
+
+  if (tripCalendarID >= calendar.size()) {
+    throw std::runtime_error("Invalid calendar index calculated: " + std::to_string(tripCalendarID));
+  }
+
+  if (!calendar[tripCalendarID]) {
+    return std::nullopt;
+  }
+
+  Departure dep;
+  dep.lineName = readString(readU32LE(tripData));
+  dep.destinationName = readString(readU32LE(tripData + 4));
+  dep.upcomingStopCount = tripData[10];
+  dep.routePatternOffset = readU32LE(tripData + 13);
+  dep.arrivalTimePatternOffset = readU32LE(tripData + 17);
+  dep.departureUnixTime = unixDay * 86400 + readU16LE(tripData + 8)*60;
+
+  return dep;
+}
+
 const std::vector<selectStop> &TimetableLoader::getStopsToSelect() const {
   return selectStops;
 }
 
-std::queue<Departure> TimetableLoader::getNextDepartures(size_t stopIndex,
-                                                         uint64_t unixTime) {
+std::queue<Departure> TimetableLoader::getNextDepartures(size_t stopIndex, uint64_t unixTime) {
   if (stopIndex >= selectStops.size()) {
     throw std::out_of_range("Invalid stop index");
   }
 
+  uint64_t unixTimeUntil = unixTime + 86400;
+
+  auto t = static_cast<time_t>(unixTime);
+  tm tm_info = *localtime(&t);
+
   uint32_t unixDay = unixTime / 86400;
-  uint16_t currentMinutes = (unixTime % 86400) / 60;
+  uint16_t currentMinutes = tm_info.tm_hour * 60 + tm_info.tm_min;
 
   uint32_t scheduleOffset = selectStops[stopIndex].second;
   if (!source.seek(scheduleOffset)) {
@@ -162,12 +206,12 @@ std::queue<Departure> TimetableLoader::getNextDepartures(size_t stopIndex,
     throw std::runtime_error("Failed to read trip count");
   }
 
-  if (tripCount == 0) return std::queue<Departure>();
+  if (tripCount == 0) return {};
 
   std::vector<Departure> departures;
   departures.reserve(30);
 
-  for (int dayOffset = -1; dayOffset < 3; ++dayOffset) {
+  for (int dayOffset = -1; dayOffset < 3; ++dayOffset) { //TODO: get only departures for next 24h
     if (dayOffset > 0 && departures.size() >= 20)
       break;
 
@@ -207,43 +251,10 @@ std::queue<Departure> TimetableLoader::getNextDepartures(size_t stopIndex,
       }
     }
 
-    for (int i = startIndex; i < tripCount && departures.size() < 20; ++i) { //TODO: change to add 20 departures every day, later sort them by departure and return only first 20
+    for (int i = startIndex; i < tripCount && departures.size() < 20; ++i) {
       uint32_t tripOffset = scheduleOffset + 2 + i * 21;
-
-      if (!source.seek(tripOffset)) {
-        throw std::runtime_error("Failed to seek to trip info");
-      }
-
-      uint8_t tripData[21];
-      if (source.read(tripData, 21) != 21) {
-        throw std::runtime_error("Failed to read trip data");
-      }
-
-      uint32_t tripCalendarID = readU16LE(tripData + 11);
-
-      if (tripCalendarID >= activeCalendar.size()) {
-        throw std::runtime_error("Invalid calendar index calculated: " +
-                                 std::to_string(tripCalendarID));
-      }
-
-      if (activeCalendar[tripCalendarID]) {
-        uint32_t lineOffset = readU32LE(tripData);
-        uint32_t destOffset = readU32LE(tripData + 4);
-        uint16_t depTime = readU16LE(tripData + 8);
-        uint8_t upcomingStopCount = tripData[10];
-        uint32_t routePatternOffset = readU32LE(tripData + 13);
-        uint32_t arrivalTimePatternOffset = readU32LE(tripData + 17);
-
-        std::string lineName = readString(lineOffset);
-        std::string destName = readString(destOffset);
-
-        uint32_t departureUnixTime = currentUnixDay * 86400 + depTime * 60;
-
-        departures.push_back({lineName, destName, upcomingStopCount,
-                              routePatternOffset, arrivalTimePatternOffset,
-                              departureUnixTime});
-
-      }
+      std::optional<Departure> dep = getDeparture(tripOffset, activeCalendar, currentUnixDay);
+      if (dep && dep.value().departureUnixTime <= unixTimeUntil) departures.push_back(dep.value());
     }
     if (departures.size() == 20) break;
   }

@@ -1,8 +1,8 @@
 #pragma once
 #include <iostream>
+#include <queue>
 #include <string>
 #include <vector>
-#include <queue>
 
 #include "Departure.h"
 #include "IDataSource.h"
@@ -18,15 +18,16 @@ class TimetableLoader {
   uint32_t directoryOffset;
   uint32_t stringTableOffset;
   uint32_t calendarOffset;
-
   std::vector<selectStop> selectStops;
+
   std::vector<selectStop> readStopsToSelect();
+  std::optional<Departure> getDeparture(uint32_t offset, std::vector<bool> calendar, uint64_t unixDay);
 
   std::vector<std::string> readRoutePattern(uint8_t count, uint32_t offset);
   std::vector<uint16_t> readArrivalTimePattern(uint8_t count, uint32_t offset);
 
-    uint16_t readU16LE(const uint8_t *buf);
-    uint32_t readU32LE(const uint8_t *buf);
+  uint16_t readU16LE(const uint8_t *buf);
+  uint32_t readU32LE(const uint8_t *buf);
 
 public:
   TimetableLoader(IDataSource &src) : source(src) {}
@@ -39,5 +40,7 @@ public:
                                           uint32_t arrivalTimePatternOffset);
 
   std::string readString(uint32_t offset) const;
-    //TODO: dodac friend z Departure
+  uint32_t getStartDate() const { return startDate; }
+
+    friend class Departure;
 };
