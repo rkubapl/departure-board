@@ -24,13 +24,11 @@ int main() {
   FileDataSource fileSource("schedule.bin");
   TimetableLoader loader(fileSource);
 
-  try {
-    loader.load();
-  } catch (const std::exception &e) {
-    std::cerr << "Blad podczas ladowania rozkladu: " << e.what() << std::endl;
-  }
+  time_t timestamp;
+  time(&timestamp);
 
-  ui_init(loader);
+
+  ui_init(timestamp, loader);
 
   while (1) {
     lv_timer_handler();

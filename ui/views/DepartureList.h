@@ -8,15 +8,14 @@ private:
   TimetableLoader &timetableLoader;
   std::string stop;
   int stopId;
-  lv_obj_t *screen;
   lv_obj_t *menu;
+  lv_obj_t *screen;
   lv_obj_t *list;
   lv_timer_t *refreshTimer;
   std::queue<Departure> currentDepartures;
 
 public:
-  DepartureList(TimetableLoader &loader, std::string stop, lv_obj_t *menu,
-                int stopId);
+  DepartureList(TimetableLoader &loader, std::string stop, int stopId, lv_obj_t *menu);
 
   ~DepartureList() override;
 

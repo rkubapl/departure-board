@@ -4,13 +4,13 @@
 #include "lvgl/core/lv_obj.h"
 #include "lvgl/widgets/lv_button.h"
 #include "lvgl/widgets/lv_label.h"
+#include "ui.h"
 
-// LV_FONT_DECLARE(roboto_bold_14);
-
-VehicleRoute::VehicleRoute(Departure departure, std::string currentStop, std::vector<ArriveStop> stops,
+VehicleRoute::VehicleRoute(Departure departure, std::string currentStop,
+                           std::vector<ArriveStop> stops,
                            lv_obj_t *departureListScreen)
-    : departure(departure), stops(stops), screen(nullptr), currentStop(currentStop),
-      departureListScreen(departureListScreen) {}
+    : departure(departure), currentStop(currentStop), stops(stops),
+      departureListScreen(departureListScreen), screen(nullptr) {}
 
 void VehicleRoute::delete_event_handler(lv_event_t *e) {
   VehicleRoute *view = (VehicleRoute *)lv_event_get_user_data(e);
@@ -32,23 +32,21 @@ void VehicleRoute::create() {
   lv_obj_set_flex_flow(screen, LV_FLEX_FLOW_COLUMN);
   lv_obj_set_scrollbar_mode(screen, LV_SCROLLBAR_MODE_OFF);
 
-  lv_obj_set_style_pad_all(screen, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_pad_row(screen, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_border_width(screen, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_pad_row(screen, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_pad_all(screen, 0, 0);
+  lv_obj_set_style_pad_row(screen, 0, 0);
+  lv_obj_set_style_border_width(screen, 0, 0);
+  lv_obj_set_style_pad_row(screen, 10, 0);
   lv_obj_add_event_cb(screen, delete_event_handler, LV_EVENT_DELETE, this);
 
-  // Tworzymy nagłówek
   lv_obj_t *header = lv_obj_create(screen);
   lv_obj_set_width(header, lv_pct(100));
   lv_obj_set_height(header, LV_SIZE_CONTENT);
-  lv_obj_set_style_bg_opa(header, LV_OPA_TRANSP,
-                          LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_border_width(header, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_margin_all(header, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_pad_hor(header, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_pad_top(header, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_pad_bottom(header, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_opa(header, LV_OPA_TRANSP, 0);
+  lv_obj_set_style_border_width(header, 0, 0);
+  lv_obj_set_style_margin_all(header, 0, 0);
+  lv_obj_set_style_pad_hor(header, 10, 0);
+  lv_obj_set_style_pad_top(header, 10, 0);
+  lv_obj_set_style_pad_bottom(header, 0, 0);
   lv_obj_set_scrollbar_mode(header, LV_SCROLLBAR_MODE_OFF);
 
   lv_obj_set_layout(header, LV_LAYOUT_FLEX);
@@ -56,21 +54,18 @@ void VehicleRoute::create() {
   lv_obj_set_flex_align(header, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER,
                         LV_FLEX_ALIGN_CENTER);
 
-  // Przycisk wstecz
   lv_obj_t *back_btn = lv_button_create(header);
   lv_obj_add_event_cb(back_btn, back_event_handler, LV_EVENT_CLICKED, this);
-  lv_obj_set_style_bg_opa(back_btn, LV_OPA_TRANSP,
-                          LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_shadow_width(back_btn, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_pad_all(back_btn, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_opa(back_btn, LV_OPA_TRANSP, 0);
+  lv_obj_set_style_shadow_width(back_btn, 0, 0);
+  lv_obj_set_style_pad_all(back_btn, 2, 0);
 
   lv_obj_t *back_icon = lv_label_create(back_btn);
   lv_obj_set_style_text_font(back_icon, &lv_font_montserrat_14, 0);
   lv_label_set_text(back_icon, LV_SYMBOL_LEFT);
-  lv_obj_set_style_text_color(back_icon, lv_color_hex(0x000000),
-                              0); // Ustawia czarny kolor (0xFFFFFF dla białego)
+  lv_obj_set_style_text_color(
+      back_icon, lv_obj_get_style_text_color(screen, LV_PART_MAIN), 0);
 
-  // Scrollujący się tytuł
   lv_obj_t *titleText = lv_label_create(header);
   std::string titleStr = departure.lineName + " " + departure.destinationName;
   lv_label_set_text(titleText, titleStr.c_str());
@@ -79,16 +74,15 @@ void VehicleRoute::create() {
   // lv_obj_set_style_pad_left(titleText, 5, 0);
   lv_obj_set_flex_grow(titleText, 1);
 
-  // Lista
   lv_obj_t *list = lv_obj_create(screen);
   lv_obj_set_width(list, lv_pct(100));
   lv_obj_set_flex_grow(list, 1);
 
-  lv_obj_set_style_bg_opa(list, LV_OPA_TRANSP, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_border_width(list, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_margin_all(list, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_pad_all(list, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_pad_bottom(list, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_opa(list, LV_OPA_TRANSP, 0);
+  lv_obj_set_style_border_width(list, 0, 0);
+  lv_obj_set_style_margin_all(list, 0, 0);
+  lv_obj_set_style_pad_all(list, 0, 0);
+  lv_obj_set_style_pad_bottom(list, 10, 0);
   // lv_obj_set_scrollbar_mode(list, LV_SCROLLBAR_MODE_OFF);
 
   lv_obj_set_layout(list, LV_LAYOUT_FLEX);
@@ -110,7 +104,8 @@ void VehicleRoute::create() {
   for (size_t i = 0; i < stops.size(); ++i) {
     lv_obj_t *line = lv_obj_create(list);
     lv_obj_set_size(line, 3, 20);
-    lv_obj_set_style_bg_color(line, lv_color_hex(0x000000), 0);
+    lv_obj_set_style_bg_color(
+        line, lv_obj_get_style_text_color(screen, LV_PART_MAIN), 0);
     lv_obj_set_style_bg_opa(line, LV_OPA_COVER, 0);
     lv_obj_set_style_border_width(line, 0, 0);
     lv_obj_set_style_margin_left(line, 37, 0);
@@ -125,14 +120,15 @@ void VehicleRoute::create() {
 
 lv_obj_t *VehicleRoute::getScreen() { return screen; }
 
-void VehicleRoute::createStop(std::string stopName, uint64_t time, lv_obj_t *list) {
+void VehicleRoute::createStop(std::string stopName, uint64_t time,
+                              lv_obj_t *list) {
   lv_obj_t *row = lv_obj_create(list);
   lv_obj_set_scrollbar_mode(row, LV_SCROLLBAR_MODE_OFF);
-  lv_obj_set_style_margin_all(row, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_pad_hor(row, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_pad_ver(row, 5, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_bg_opa(row, LV_OPA_TRANSP, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_border_width(row, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_margin_all(row, 0, 0);
+  lv_obj_set_style_pad_hor(row, 10, 0);
+  lv_obj_set_style_pad_ver(row, 5, 0);
+  lv_obj_set_style_bg_opa(row, LV_OPA_TRANSP, 0);
+  lv_obj_set_style_border_width(row, 0, 0);
   lv_obj_set_width(row, lv_pct(100));
   lv_obj_set_height(row, LV_SIZE_CONTENT);
 
@@ -157,6 +153,7 @@ void VehicleRoute::createStop(std::string stopName, uint64_t time, lv_obj_t *lis
   lv_obj_t *label_dest = lv_label_create(row);
   lv_label_set_text(label_dest, stopName.c_str());
   lv_label_set_long_mode(label_dest, LV_LABEL_LONG_MODE_SCROLL);
+  lv_obj_set_style_text_font(label_dest, &roboto_14, 0);
   lv_obj_set_flex_grow(label_dest, 1);
   // lv_obj_set_style_pad_left(label_dest, 10, 0);
 }

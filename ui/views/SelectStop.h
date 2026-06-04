@@ -1,11 +1,9 @@
-
 #pragma once
 #include "IView.h"
 #include "TimetableLoader.h"
 #include "lvgl/lv_types.h"
 
 class SelectStop: public IView {
-private:
     TimetableLoader& timetableLoader;
     lv_obj_t* screen;
 

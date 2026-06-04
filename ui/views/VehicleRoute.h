@@ -4,13 +4,11 @@
 #include "lvgl/lv_types.h"
 
 class VehicleRoute : public IView {
-private:
-  lv_obj_t* screen;
-  lv_obj_t* departureListScreen;
   Departure departure;
-  std::vector<ArriveStop> stops;
   std::string currentStop;
-
+  std::vector<ArriveStop> stops;
+  lv_obj_t* departureListScreen;
+  lv_obj_t* screen;
 public:
   VehicleRoute(Departure departure, std::string currentStop, std::vector<ArriveStop> stops, lv_obj_t* departureListScreen);
 

@@ -5,9 +5,9 @@
 #include <ctime>
 
 DepartureList::DepartureList(TimetableLoader &loader, std::string stop,
-                             lv_obj_t *menu, int stopId)
-    : timetableLoader(loader), stop(stop), screen(nullptr), menu(menu),
-      stopId(stopId), list(nullptr), refreshTimer(nullptr) {}
+                             int stopId, lv_obj_t *menu)
+    : timetableLoader(loader), stop(stop), stopId(stopId), menu(menu),
+      screen(nullptr), list(nullptr), refreshTimer(nullptr) {}
 
 DepartureList::~DepartureList() {
   if (screen) {
@@ -32,7 +32,7 @@ void DepartureList::back_event_handler(lv_event_t *e) {
   lv_obj_del_async(view->getScreen());
 }
 
-void DepartureList::create() {
+void DepartureList::create() { //TODO: add a text that there is no departures for next 24h
   screen = lv_obj_create(NULL);
   lv_obj_set_layout(screen, LV_LAYOUT_FLEX);
   lv_obj_set_flex_flow(screen, LV_FLEX_FLOW_COLUMN);
@@ -47,8 +47,7 @@ void DepartureList::create() {
   lv_obj_t *header = lv_obj_create(screen);
   lv_obj_set_width(header, lv_pct(100));
   lv_obj_set_height(header, LV_SIZE_CONTENT);
-  lv_obj_set_style_bg_opa(header, LV_OPA_TRANSP,
-                          0);
+  lv_obj_set_style_bg_opa(header, LV_OPA_TRANSP, 0);
   lv_obj_set_style_border_width(header, 0, 0);
   lv_obj_set_style_margin_all(header, 0, 0);
   lv_obj_set_style_pad_hor(header, 10, 0);
@@ -61,18 +60,17 @@ void DepartureList::create() {
   lv_obj_set_flex_align(header, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER,
                         LV_FLEX_ALIGN_CENTER);
 
-  // Przycisk wstecz
   lv_obj_t *back_btn = lv_button_create(header);
   lv_obj_add_event_cb(back_btn, back_event_handler, LV_EVENT_CLICKED, this);
-  lv_obj_set_style_bg_opa(back_btn, LV_OPA_TRANSP,
-                          0);
+  lv_obj_set_style_bg_opa(back_btn, LV_OPA_TRANSP, 0);
   lv_obj_set_style_shadow_width(back_btn, 0, 0);
   lv_obj_set_style_pad_all(back_btn, 2, 0);
 
   lv_obj_t *back_icon = lv_label_create(back_btn);
   lv_obj_set_style_text_font(back_icon, &lv_font_montserrat_14, 0);
   lv_label_set_text(back_icon, LV_SYMBOL_LEFT);
-  lv_obj_set_style_text_color(back_icon, lv_color_hex(0x000000), 0);
+  lv_obj_set_style_text_color(
+      back_icon, lv_obj_get_style_text_color(screen, LV_PART_MAIN), 0);
 
   lv_obj_t *titleText = lv_label_create(header);
   lv_label_set_text(titleText, stop.c_str());
@@ -102,19 +100,24 @@ void DepartureList::create() {
   std::queue<Departure> emptyQueue;
   std::swap(currentDepartures, emptyQueue);
 
-  currentDepartures =
-      timetableLoader.getNextDepartures(stopId, currentUnixTime);
-
-  std::queue<Departure> temp = currentDepartures;
-  int i = 0;
-
-  while (!temp.empty() && i < 10) {
-    createDeparture(temp.front(), list, currentUnixTime);
-    temp.pop();
-    i++;
-  }
+  currentDepartures = timetableLoader.getNextDepartures(stopId, currentUnixTime);
+  while (!currentDepartures.empty()) currentDepartures.pop();
 
   refreshTimer = lv_timer_create(on_timer_refresh, 60000, this);
+
+  if (currentDepartures.empty()) {
+    lv_obj_t* text = lv_label_create(list);
+    lv_label_set_text(text, "Brak odjazdów przez następne 24h");
+    lv_obj_set_style_text_font(text, &roboto_14, 0);
+    return;
+  }
+
+  std::queue<Departure> temp = currentDepartures;
+
+  for (int i = 0; !temp.empty() && i < 10; i++) {
+    createDeparture(temp.front(), list, currentUnixTime);
+    temp.pop();
+  }
 }
 
 lv_obj_t *DepartureList::getScreen() { return screen; }
@@ -142,6 +145,7 @@ lv_obj_t *DepartureList::createDeparture(Departure &dep, lv_obj_t *list,
 
   lv_obj_t *label_dest = lv_label_create(row);
   lv_label_set_text(label_dest, dep.destinationName.c_str());
+  lv_obj_set_style_text_font(label_dest, &roboto_14, 0);
   lv_obj_set_width(label_dest, 160);
   lv_label_set_long_mode(label_dest, LV_LABEL_LONG_MODE_SCROLL);
 
@@ -155,7 +159,7 @@ lv_obj_t *DepartureList::createDeparture(Departure &dep, lv_obj_t *list,
 
   time_t arrTime = dep.departureUnixTime;
 
-  struct tm *tm_info = localtime(&arrTime);
+  tm *tm_info = localtime(&arrTime);
   char buffer[16];
   strftime(buffer, sizeof(buffer), "%H:%M", tm_info);
 
@@ -189,7 +193,8 @@ void DepartureList::on_btn_clicked(lv_event_t *e) {
       dep.upcomingStopCount, dep.departureUnixTime, dep.routePatternOffset,
       dep.arrivalTimePatternOffset);
 
-  VehicleRoute *vehicle_route = new VehicleRoute(dep, view->stop, stops, view->getScreen());
+  VehicleRoute *vehicle_route =
+      new VehicleRoute(dep, view->stop, stops, view->getScreen());
   vehicle_route->create();
   lv_screen_load_anim(vehicle_route->getScreen(), LV_SCREEN_LOAD_ANIM_OUT_LEFT,
                       0, 0, false);
@@ -220,7 +225,6 @@ void DepartureList::on_timer_refresh(lv_timer_t *timer) {
       temp.pop();
     }
   } else {
-    // Just update the times for existing items
     uint32_t child_cnt = lv_obj_get_child_cnt(view->list);
     std::queue<Departure> temp = view->currentDepartures;
     for (uint32_t i = 0; i < child_cnt; i++) {

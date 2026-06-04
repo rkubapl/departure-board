@@ -1,11 +1,12 @@
 #pragma once
 #include <iostream>
-#include <queue>
 #include <string>
 #include <vector>
+#include <list>
 
 #include "Departure.h"
 #include "IDataSource.h"
+
 
 typedef std::pair<std::string, uint32_t> selectStop;
 typedef std::pair<std::string, int> ArriveStop;
@@ -34,7 +35,8 @@ public:
   void load();
   std::vector<bool> getServicesForDay(uint32_t unixDay);
   const std::vector<selectStop> &getStopsToSelect() const;
-  std::queue<Departure> getNextDepartures(size_t stopIndex, uint64_t unixTime);
+
+  std::list<Departure> getNextDepartures(size_t stopIndex, uint64_t unixTime);
   std::vector<ArriveStop> getDetailedInfo(uint8_t count, uint64_t departureTime,
                                           uint32_t routePatternOffset,
                                           uint32_t arrivalTimePatternOffset);

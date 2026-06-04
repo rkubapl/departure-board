@@ -183,7 +183,7 @@ const std::vector<selectStop> &TimetableLoader::getStopsToSelect() const {
   return selectStops;
 }
 
-std::queue<Departure> TimetableLoader::getNextDepartures(size_t stopIndex, uint64_t unixTime) {
+std::list<Departure> TimetableLoader::getNextDepartures(size_t stopIndex, uint64_t unixTime) {
   if (stopIndex >= selectStops.size()) {
     throw std::out_of_range("Invalid stop index");
   }
@@ -264,9 +264,9 @@ std::queue<Departure> TimetableLoader::getNextDepartures(size_t stopIndex, uint6
               return a.departureUnixTime < b.departureUnixTime;
             });
 
-  std::queue<Departure> departuresQueue;
+  std::list<Departure> departuresQueue;
   for (const auto &dep : departures) {
-    departuresQueue.push(dep);
+    departuresQueue.push_back(dep);
   }
 
   return departuresQueue;
