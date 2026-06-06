@@ -1,12 +1,11 @@
 #pragma once
 #include <iostream>
+#include <list>
 #include <string>
 #include <vector>
-#include <list>
 
 #include "Departure.h"
 #include "IDataSource.h"
-
 
 typedef std::pair<std::string, uint32_t> selectStop;
 typedef std::pair<std::string, int> ArriveStop;
@@ -22,7 +21,8 @@ class TimetableLoader {
   std::vector<selectStop> selectStops;
 
   std::vector<selectStop> readStopsToSelect();
-  std::optional<Departure> getDeparture(uint32_t offset, std::vector<bool> calendar, uint64_t unixDay);
+  std::optional<Departure>
+  getDeparture(uint32_t offset, std::vector<bool> calendar, uint64_t unixDay);
 
   std::vector<std::string> readRoutePattern(uint8_t count, uint32_t offset);
   std::vector<uint16_t> readArrivalTimePattern(uint8_t count, uint32_t offset);
@@ -33,16 +33,13 @@ class TimetableLoader {
 public:
   TimetableLoader(IDataSource &src) : source(src) {}
   void load();
-  std::vector<bool> getServicesForDay(uint32_t unixDay);
+  std::vector<bool> getServicesForDay(uint32_t unixDay) const;
   const std::vector<selectStop> &getStopsToSelect() const;
 
   std::list<Departure> getNextDepartures(size_t stopIndex, uint64_t unixTime);
-  std::vector<ArriveStop> getDetailedInfo(uint8_t count, uint64_t departureTime,
-                                          uint32_t routePatternOffset,
-                                          uint32_t arrivalTimePatternOffset);
+  std::vector<ArriveStop> getDetailedInfo(Departure d
+  );
 
   std::string readString(uint32_t offset) const;
   uint32_t getStartDate() const { return startDate; }
-
-    friend class Departure;
 };

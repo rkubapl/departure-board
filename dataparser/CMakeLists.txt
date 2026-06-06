@@ -9,6 +9,6 @@ if(ESP_PLATFORM)
         INCLUDE_DIRS "."
     )
 else()
-    add_library(dataparser SHARED IDataSource.h TimetableLoader.cpp TimetableLoader.h Departure.cpp Departure.h ../esp32/main/MemoryDataSource.h ../esp32/main/MemoryDataSource.cpp)
+    add_library(dataparser SHARED IDataSource.h TimetableLoader.cpp TimetableLoader.h Departure.cpp Departure.h)
     target_include_directories(dataparser PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 endif()

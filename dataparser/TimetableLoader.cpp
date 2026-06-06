@@ -1,12 +1,10 @@
 #include "TimetableLoader.h"
 #include <algorithm>
-#include <stdexcept>
-#include <format>
 #include <cstdio>
 #include <ctime>
+#include <format>
 #include <optional>
-
-//note: what to do with exceptions? should they stay or remove them to reduce memory usage
+#include <stdexcept>
 
 inline uint16_t TimetableLoader::readU16LE(const uint8_t *buf) {
   return static_cast<uint16_t>(buf[0] | (buf[1] << 8));
@@ -34,7 +32,8 @@ void TimetableLoader::load() {
   if (source.read(header, 24) != 24)
     throw std::runtime_error("Failed to read file: header");
 
-  if (header[0] != 'P' || header[1] != 'K' || header[2] != 'P' || header[3] != 'K') {
+  if (header[0] != 'P' || header[1] != 'K' || header[2] != 'P' ||
+      header[3] != 'K') {
     throw InvalidFileFormat("Invalid magic number.");
   }
 
@@ -50,7 +49,7 @@ void TimetableLoader::load() {
   selectStops = readStopsToSelect();
 }
 
-std::vector<bool> TimetableLoader::getServicesForDay(uint32_t unixDay) {
+std::vector<bool> TimetableLoader::getServicesForDay(uint32_t unixDay) const {
   if (unixDay < startDate || unixDay >= startDate + daysAmount) {
     throw std::invalid_argument("Day out of range");
   }
@@ -99,7 +98,8 @@ std::string TimetableLoader::readString(uint32_t offset) const {
   for (size_t i = 0; i < 1000; ++i) {
     uint8_t ch = 0;
     if (source.read(&ch, 1) != 1) {
-      throw std::runtime_error("EOF while reading null-terminated string");}
+      throw std::runtime_error("EOF while reading null-terminated string");
+    }
 
     if (ch == '\0') {
       return out;
@@ -108,7 +108,8 @@ std::string TimetableLoader::readString(uint32_t offset) const {
     out.push_back(static_cast<char>(ch));
   }
 
-  throw std::runtime_error("Null terminator not found (string too long or corrupted data)");
+  throw std::runtime_error(
+      "Null terminator not found (string too long or corrupted data)");
 }
 
 std::vector<selectStop> TimetableLoader::readStopsToSelect() {
@@ -148,7 +149,9 @@ std::vector<selectStop> TimetableLoader::readStopsToSelect() {
   return stops;
 }
 
-std::optional<Departure> TimetableLoader::getDeparture(uint32_t offset, std::vector<bool> calendar, uint64_t unixDay) {
+std::optional<Departure>
+TimetableLoader::getDeparture(uint32_t offset, std::vector<bool> calendar,
+                              uint64_t unixDay) {
   if (!source.seek(offset)) {
     throw std::runtime_error("Failed to seek to trip info");
   }
@@ -161,7 +164,8 @@ std::optional<Departure> TimetableLoader::getDeparture(uint32_t offset, std::vec
   uint32_t tripCalendarID = readU16LE(tripData + 11);
 
   if (tripCalendarID >= calendar.size()) {
-    throw std::runtime_error("Invalid calendar index calculated: " + std::to_string(tripCalendarID));
+    throw std::runtime_error("Invalid calendar index calculated: " +
+                             std::to_string(tripCalendarID));
   }
 
   if (!calendar[tripCalendarID]) {
@@ -174,7 +178,7 @@ std::optional<Departure> TimetableLoader::getDeparture(uint32_t offset, std::vec
   dep.upcomingStopCount = tripData[10];
   dep.routePatternOffset = readU32LE(tripData + 13);
   dep.arrivalTimePatternOffset = readU32LE(tripData + 17);
-  dep.departureUnixTime = unixDay * 86400 + readU16LE(tripData + 8)*60;
+  dep.departureUnixTime = unixDay * 86400 + readU16LE(tripData + 8) * 60;
 
   return dep;
 }
@@ -183,7 +187,8 @@ const std::vector<selectStop> &TimetableLoader::getStopsToSelect() const {
   return selectStops;
 }
 
-std::list<Departure> TimetableLoader::getNextDepartures(size_t stopIndex, uint64_t unixTime) {
+std::list<Departure> TimetableLoader::getNextDepartures(size_t stopIndex,
+                                                        uint64_t unixTime) {
   if (stopIndex >= selectStops.size()) {
     throw std::out_of_range("Invalid stop index");
   }
@@ -191,7 +196,7 @@ std::list<Departure> TimetableLoader::getNextDepartures(size_t stopIndex, uint64
   uint64_t unixTimeUntil = unixTime + 86400;
 
   auto t = static_cast<time_t>(unixTime);
-  tm tm_info = *localtime(&t);
+  tm tm_info = *gmtime(&t);
 
   uint32_t unixDay = unixTime / 86400;
   uint16_t currentMinutes = tm_info.tm_hour * 60 + tm_info.tm_min;
@@ -206,12 +211,14 @@ std::list<Departure> TimetableLoader::getNextDepartures(size_t stopIndex, uint64
     throw std::runtime_error("Failed to read trip count");
   }
 
-  if (tripCount == 0) return {};
+  if (tripCount == 0)
+    return {};
 
   std::vector<Departure> departures;
   departures.reserve(30);
 
-  for (int dayOffset = -1; dayOffset < 3; ++dayOffset) { //TODO: get only departures for next 24h
+  for (int dayOffset = -1; dayOffset < 3;
+       ++dayOffset) { // TODO: get only departures for next 24h
     if (dayOffset > 0 && departures.size() >= 20)
       break;
 
@@ -253,10 +260,13 @@ std::list<Departure> TimetableLoader::getNextDepartures(size_t stopIndex, uint64
 
     for (int i = startIndex; i < tripCount && departures.size() < 20; ++i) {
       uint32_t tripOffset = scheduleOffset + 2 + i * 21;
-      std::optional<Departure> dep = getDeparture(tripOffset, activeCalendar, currentUnixDay);
-      if (dep && dep.value().departureUnixTime <= unixTimeUntil) departures.push_back(dep.value());
+      std::optional<Departure> dep =
+          getDeparture(tripOffset, activeCalendar, currentUnixDay);
+      if (dep && dep.value().departureUnixTime <= unixTimeUntil)
+        departures.push_back(dep.value());
     }
-    if (departures.size() == 20) break;
+    if (departures.size() == 20)
+      break;
   }
 
   std::sort(departures.begin(), departures.end(),
@@ -289,6 +299,7 @@ std::vector<std::string> TimetableLoader::readRoutePattern(uint8_t count,
 
   std::vector<std::string> names;
   names.reserve(count);
+
   for (uint8_t i = 0; i < count; ++i) {
     names.push_back(readString(offsets[i]));
   }
@@ -304,7 +315,9 @@ std::vector<uint16_t> TimetableLoader::readArrivalTimePattern(uint8_t count,
     throw std::runtime_error("Failed to seek to arrival time pattern");
   }
 
-  std::vector<uint16_t> times(count);
+  std::vector<uint16_t> times;
+  times.reserve(count);
+
   if (source.read(reinterpret_cast<uint8_t *>(times.data()), count * 2) !=
       count * 2) {
     throw std::runtime_error("Failed to read arrival time pattern");
@@ -313,24 +326,22 @@ std::vector<uint16_t> TimetableLoader::readArrivalTimePattern(uint8_t count,
   return times;
 }
 
-std::vector<ArriveStop>
-TimetableLoader::getDetailedInfo(uint8_t count, uint64_t departureTime,
-                                 uint32_t routePatternOffset,
-                                 uint32_t arrivalTimePatternOffset) {
-  std::vector<ArriveStop> details;
-  if (count == 0)
-    return details;
+std::vector<ArriveStop> TimetableLoader::getDetailedInfo(Departure d) {
+  if (d.getUpcomingStopCount() == 0)
+    return {};
 
   std::vector<std::string> routePattern =
-      readRoutePattern(count, routePatternOffset);
-  std::vector<uint16_t> arrivalTimePattern =
-      readArrivalTimePattern(count, arrivalTimePatternOffset);
+      readRoutePattern(d.getUpcomingStopCount(), d.getRoutePatternOffset());
+  std::vector<uint16_t> arrivalTimePattern = readArrivalTimePattern(
+      d.getUpcomingStopCount(), d.getArrivalTimePatternOffset());
 
-  details.reserve(count);
-  for (uint8_t i = 0; i < count; ++i) {
+  std::vector<ArriveStop> details;
+  details.reserve(d.getUpcomingStopCount());
+
+  for (uint8_t i = 0; i < d.getUpcomingStopCount(); ++i) {
     details.push_back(
-        {routePattern[i],
-         static_cast<int>(departureTime + arrivalTimePattern[i] * 60)});
+        {routePattern[i], static_cast<int>(d.getDepartureUnixTime() +
+                                           arrivalTimePattern[i] * 60)});
   }
 
   return details;
