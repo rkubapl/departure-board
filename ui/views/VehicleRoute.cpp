@@ -52,25 +52,33 @@ void VehicleRoute::create() {
                         LV_FLEX_ALIGN_CENTER);
 
   lv_obj_t *back_btn = lv_button_create(header);
+  lv_obj_set_width(back_btn, LV_SIZE_CONTENT);
+  lv_obj_set_height(back_btn, LV_SIZE_CONTENT);
+  lv_obj_set_style_max_width(back_btn, lv_pct(100), 0);
   lv_obj_add_event_cb(back_btn, back_event_handler, LV_EVENT_CLICKED, this);
   lv_obj_set_style_bg_opa(back_btn, LV_OPA_TRANSP, 0);
   lv_obj_set_style_shadow_width(back_btn, 0, 0);
-  lv_obj_set_style_pad_all(back_btn, 2, 0);
+  lv_obj_set_style_pad_all(back_btn, 0, 0);
+
+  lv_obj_set_layout(back_btn, LV_LAYOUT_FLEX);
+  lv_obj_set_flex_flow(back_btn, LV_FLEX_FLOW_ROW);
+  lv_obj_set_flex_align(back_btn, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER,
+                        LV_FLEX_ALIGN_CENTER);
 
   lv_obj_t *back_icon = lv_label_create(back_btn);
   lv_obj_set_style_text_font(back_icon, &lv_font_montserrat_14, 0);
   lv_label_set_text(back_icon, LV_SYMBOL_LEFT);
   lv_obj_set_style_text_color(
       back_icon, lv_obj_get_style_text_color(screen, LV_PART_MAIN), 0);
+  lv_obj_set_style_pad_all(back_icon, 2, 0);
 
-  lv_obj_t *titleText = lv_label_create(header);
+  lv_obj_t *titleText = lv_label_create(back_btn);
   std::string titleStr =
       departure.getLineName() + " " + departure.getDestinationName();
   lv_label_set_text(titleText, titleStr.c_str());
   lv_obj_set_style_text_font(titleText, &roboto_bold_14, 0);
   lv_label_set_long_mode(titleText, LV_LABEL_LONG_MODE_SCROLL);
   // lv_obj_set_style_pad_left(titleText, 5, 0);
-  lv_obj_set_flex_grow(titleText, 1);
 
   lv_obj_t *list = lv_obj_create(screen);
   lv_obj_set_width(list, lv_pct(100));

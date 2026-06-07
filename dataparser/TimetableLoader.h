@@ -3,6 +3,7 @@
 #include <list>
 #include <string>
 #include <vector>
+#include <optional>
 
 #include "Departure.h"
 #include "IDataSource.h"

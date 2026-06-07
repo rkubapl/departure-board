@@ -320,8 +320,7 @@ std::vector<uint16_t> TimetableLoader::readArrivalTimePattern(uint8_t count,
     throw std::runtime_error("Failed to seek to arrival time pattern");
   }
 
-  std::vector<uint16_t> times;
-  times.reserve(count);
+  std::vector<uint16_t> times(count);
 
   if (source.read(reinterpret_cast<uint8_t *>(times.data()), count * 2) !=
       count * 2) {
