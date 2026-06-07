@@ -1,0 +1,45 @@
+name: Build Linux x64 (Debian 13)
+
+on:
+  push:
+    branches: [ "master", "main" ]
+  pull_request:
+    branches: [ "master", "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest 
+    container:
+      image: debian:testing
+
+    steps:
+    - name: Git instalation
+      run: |
+        apt-get update
+        apt-get install -y git
+
+    - name: Download
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Libraries
+      run: |
+        apt-get install -y build-essential cmake libsdl2-dev
+
+    - name: Compile
+      working-directory: ./pc
+      run: |
+        mkdir build
+        cd build
+        cmake ..
+        make
+
+    - name: prepare
+      uses: actions/upload-artifact@v4
+      with:
+        name: JIPP-Debian13-x64-Binaries
+        path: |
+          pc/build/DepartureDisplay
+          pc/build/dataparser/libdataparser.so
