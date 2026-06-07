@@ -1,6 +1,6 @@
 ## Build for PC
 Tested on macOS using GCC 15. 
-- Pull submodules (lvgl): `git submodule update --init --recursive`
+- Pull submodules (lvgl): `git submodule update --init --recursive` or clone lvgl repository `git clone https://github.com/lvgl/lvgl`
 - Install SDL according to your platform: 
   - Linux: `sudo apt install libsdl2-dev`
   - macOS: `brew install sdl2`

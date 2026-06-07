@@ -1,6 +1,6 @@
 ## Kompilacja na PC
 Testowano na systemie macOS z użyciem kompilatora GCC 15. 
-- Pobierz submoduły (lvgl): `git submodule update --init --recursive`
+- Pobierz submoduły (lvgl): `git submodule update --init --recursive` lub pobierz repozytorium lvgl `git clone https://github.com/lvgl/lvgl`
 - Zainstaluj bibliotekę SDL zgodnie ze swoim systemem operacyjnym: 
   - Linux: `sudo apt install libsdl2-dev`
   - macOS: `brew install sdl2`
