@@ -1,29 +1,26 @@
 #include "VehicleRoute.h"
 #include <ctime>
 
+#include "../ScreenManager.h"
+#include "../ui.h"
+#include "lvgl/api_map/lv_api_map_v8.h"
 #include "lvgl/core/lv_obj.h"
 #include "lvgl/widgets/lv_button.h"
 #include "lvgl/widgets/lv_label.h"
-#include "ui.h"
 
 VehicleRoute::VehicleRoute(Departure departure, std::string currentStop,
-                           std::vector<ArriveStop> stops,
-                           lv_obj_t *departureListScreen)
+                           std::vector<ArriveStop> stops)
     : departure(departure), currentStop(currentStop), stops(stops),
-      departureListScreen(departureListScreen), screen(nullptr) {}
+      screen(nullptr) {}
 
 void VehicleRoute::delete_event_handler(lv_event_t *e) {
-  VehicleRoute *view = (VehicleRoute *)lv_event_get_user_data(e);
+  auto view = static_cast<VehicleRoute *>(lv_event_get_user_data(e));
   view->screen = nullptr;
   delete view;
 }
 
 void VehicleRoute::back_event_handler(lv_event_t *e) {
-  VehicleRoute *view = (VehicleRoute *)lv_event_get_user_data(e);
-
-  lv_screen_load_anim(view->departureListScreen, LV_SCREEN_LOAD_ANIM_OUT_RIGHT,
-                      0, 0, false);
-  lv_obj_del_async(view->getScreen());
+  ScreenManager::getInstance().pop();
 }
 
 void VehicleRoute::create() {
@@ -67,7 +64,8 @@ void VehicleRoute::create() {
       back_icon, lv_obj_get_style_text_color(screen, LV_PART_MAIN), 0);
 
   lv_obj_t *titleText = lv_label_create(header);
-  std::string titleStr = departure.lineName + " " + departure.destinationName;
+  std::string titleStr =
+      departure.getLineName() + " " + departure.getDestinationName();
   lv_label_set_text(titleText, titleStr.c_str());
   lv_obj_set_style_text_font(titleText, &roboto_bold_14, 0);
   lv_label_set_long_mode(titleText, LV_LABEL_LONG_MODE_SCROLL);
@@ -99,7 +97,7 @@ void VehicleRoute::create() {
   lv_label_set_text(text, "Trasa pojazdu");
   lv_obj_set_style_text_align(text, LV_TEXT_ALIGN_CENTER, 0);
 
-  createStop(currentStop, departure.departureUnixTime, list);
+  createStop(currentStop, departure.getDepartureUnixTime(), list);
 
   for (size_t i = 0; i < stops.size(); ++i) {
     lv_obj_t *line = lv_obj_create(list);
@@ -141,7 +139,7 @@ void VehicleRoute::createStop(std::string stopName, uint64_t time,
   lv_obj_t *label_time = lv_label_create(row);
 
   time_t arrTime = time;
-  struct tm *tm_info = localtime(&arrTime);
+  struct tm *tm_info = gmtime(&arrTime);
   char buffer[16];
   strftime(buffer, sizeof(buffer), "%H:%M", tm_info);
 

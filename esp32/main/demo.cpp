@@ -28,6 +28,7 @@ extern "C" {
 #include <sys/unistd.h>
 
 #include "MemoryDataSource.h"
+#include "../../ui/TimeManager.h"
 #include "dataparser/TimetableLoader.h"
 #include "ui/ui.h"
 
@@ -111,7 +112,7 @@ extern "C" void app_main(void) {
 
             struct timeval tv = {};
             tv.tv_sec = global_loader->getStartDate() * 86400 + 8 * 3600;
-            settimeofday(&tv, NULL);
+            TimeManager::setTime(tv.tv_sec);
             ESP_LOGI(TAG, "System time set to timetable start date (8:00 AM)");
           } catch (const std::exception &e) {
             ESP_LOGE(TAG, "Failed to load schedule: %s", e.what());

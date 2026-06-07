@@ -3,16 +3,18 @@
 #include "TimetableLoader.h"
 #include "lvgl/lv_types.h"
 
-class SelectStop: public IView {
-    TimetableLoader& timetableLoader;
-    lv_obj_t* screen;
+class SelectStop : public IView {
+  TimetableLoader &timetableLoader;
+  lv_obj_t *screen;
 
 public:
-    SelectStop(TimetableLoader& loader);
-    ~SelectStop() override;
+  SelectStop(TimetableLoader &loader);
+  ~SelectStop() override = default;
 
-    void create() override;
-    lv_obj_t* getScreen() override;
+  void create() override;
+  lv_obj_t *getScreen() override;
+
 private:
-    static void on_btn_clicked(lv_event_t *e);
+  static void on_btn_clicked(lv_event_t *e);
+  static void delete_event_handler(lv_event_t *e);
 };

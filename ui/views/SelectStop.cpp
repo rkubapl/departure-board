@@ -3,6 +3,7 @@
 
 #include "DepartureList.h"
 #include "ui.h"
+#include "../ScreenManager.h"
 #include "lvgl/api_map/lv_api_map_v8.h"
 #include "lvgl/widgets/lv_label.h"
 #include "lvgl/widgets/lv_list.h"
@@ -12,14 +13,15 @@
 SelectStop::SelectStop(TimetableLoader &loader)
     : timetableLoader(loader), screen(nullptr) {}
 
-SelectStop::~SelectStop() {
-  if (screen) {
-    lv_obj_del(screen);
-  }
+void SelectStop::delete_event_handler(lv_event_t *e) {
+  auto *view = static_cast<SelectStop*>(lv_event_get_user_data(e));
+  view->screen = nullptr;
+  delete view;
 }
 
 void SelectStop::create() { //TODO: if the schedule doesn't cover current date then add information that there is no data
   screen = lv_obj_create(NULL);
+  lv_obj_add_event_cb(screen, delete_event_handler, LV_EVENT_DELETE, this);
 
   lv_obj_set_layout(screen, LV_LAYOUT_FLEX);
   lv_obj_set_flex_flow(screen, LV_FLEX_FLOW_COLUMN);
@@ -61,12 +63,8 @@ void SelectStop::on_btn_clicked(lv_event_t *e) {
     }
   }
 
-  DepartureList *departure_list =
-      new DepartureList(view->timetableLoader, std::string(stop_name),
-                        stop_id, view->getScreen());
-  departure_list->create();
-  lv_screen_load_anim(departure_list->getScreen(), LV_SCREEN_LOAD_ANIM_OUT_LEFT,
-                      0, 0, false);
+  DepartureList *departure_list = new DepartureList(view->timetableLoader, std::string(stop_name), stop_id);
+  ScreenManager::getInstance().push(departure_list);
 }
 
 lv_obj_t *SelectStop::getScreen() { return screen; }

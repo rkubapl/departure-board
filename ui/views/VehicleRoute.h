@@ -7,10 +7,9 @@ class VehicleRoute : public IView {
   Departure departure;
   std::string currentStop;
   std::vector<ArriveStop> stops;
-  lv_obj_t* departureListScreen;
   lv_obj_t* screen;
 public:
-  VehicleRoute(Departure departure, std::string currentStop, std::vector<ArriveStop> stops, lv_obj_t* departureListScreen);
+  VehicleRoute(Departure departure, std::string currentStop, std::vector<ArriveStop> stops);
 
   void create() override;
   lv_obj_t* getScreen() override;

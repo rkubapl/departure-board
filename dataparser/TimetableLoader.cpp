@@ -189,6 +189,7 @@ const std::vector<selectStop> &TimetableLoader::getStopsToSelect() const {
 
 std::list<Departure> TimetableLoader::getNextDepartures(size_t stopIndex,
                                                         uint64_t unixTime) {
+
   if (stopIndex >= selectStops.size()) {
     throw std::out_of_range("Invalid stop index");
   }
@@ -199,6 +200,10 @@ std::list<Departure> TimetableLoader::getNextDepartures(size_t stopIndex,
   tm tm_info = *gmtime(&t);
 
   uint32_t unixDay = unixTime / 86400;
+  if (unixDay < startDate || unixDay > startDate + daysAmount - 1) {
+    throw ScheduleOutOfDateException("Schedule is out of date");
+  }
+
   uint16_t currentMinutes = tm_info.tm_hour * 60 + tm_info.tm_min;
 
   uint32_t scheduleOffset = selectStops[stopIndex].second;

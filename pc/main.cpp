@@ -3,7 +3,6 @@
 #include "TimetableLoader.h"
 #include "lvgl/lvgl.h"
 #include "ui.h"
-#include <iostream>
 
 static lv_display_t *display;
 static lv_indev_t *mouse;
@@ -24,11 +23,7 @@ int main() {
   FileDataSource fileSource("schedule.bin");
   TimetableLoader loader(fileSource);
 
-  time_t timestamp;
-  time(&timestamp);
-
-
-  ui_init(timestamp, loader);
+  ui_init(loader);
 
   while (1) {
     lv_timer_handler();

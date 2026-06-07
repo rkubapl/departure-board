@@ -10,6 +10,12 @@
 typedef std::pair<std::string, uint32_t> selectStop;
 typedef std::pair<std::string, int> ArriveStop;
 
+class ScheduleOutOfDateException : public std::runtime_error {
+public:
+  explicit ScheduleOutOfDateException(const std::string &message)
+      : std::runtime_error(message) {}
+};
+
 class TimetableLoader {
   IDataSource &source;
 
@@ -42,4 +48,5 @@ public:
 
   std::string readString(uint32_t offset) const;
   uint32_t getStartDate() const { return startDate; }
+  uint16_t getDaysAmount() const { return daysAmount; }
 };

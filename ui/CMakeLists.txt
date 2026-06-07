@@ -2,10 +2,14 @@ if(ESP_PLATFORM)
     idf_component_register(
         SRCS
             ui.cpp
+            ScreenManager.cpp
+            TimeManager.cpp
             views/SelectStop.cpp
             views/DepartureList.cpp
             views/VehicleRoute.cpp
             views/ErrorView.cpp
+            views/SetDateScreen.cpp
+            views/SetTimeScreen.cpp
             fonts/roboto_14.c
             fonts/roboto_light_14.c
             fonts/roboto_medium_14.c
@@ -14,7 +18,7 @@ if(ESP_PLATFORM)
         REQUIRES lvgl dataparser
     )
 else()
-    add_library(ui STATIC ui.cpp ui.h
+    add_library(ui STATIC ui.cpp ui.h ScreenManager.cpp ScreenManager.h TimeManager.cpp TimeManager.h
             views/SelectStop.cpp
             views/SelectStop.h
             views/DepartureList.cpp
@@ -27,6 +31,8 @@ else()
             fonts/roboto_light_14.c
             fonts/roboto_medium_14.c
             fonts/roboto_bold_14.c
+            views/SetDateScreen.cpp
+            views/SetDateScreen.h
             views/SetTimeScreen.cpp
             views/SetTimeScreen.h)
 
