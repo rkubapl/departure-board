@@ -21,7 +21,13 @@ void ScreenManager::push(IView *newScreen) {
     screenStack.push(newScreen);
   } catch (const std::exception &e) {
     std::cerr << "Błąd podczas tworzenia ekranu: " << e.what() << std::endl;
-    delete newScreen;
+
+    if (newScreen->getScreen() != nullptr) {
+      lv_obj_del_async(newScreen->getScreen());
+    } else {
+      delete newScreen;
+    }
+
     ErrorView *errorView = new ErrorView("Błąd", e.what());
     this->push(errorView);
   }

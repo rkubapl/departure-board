@@ -27,8 +27,8 @@ extern "C" {
 #include <sys/time.h>
 #include <sys/unistd.h>
 
-#include "MemoryDataSource.h"
 #include "../../ui/TimeManager.h"
+#include "MemoryDataSource.h"
 #include "dataparser/TimetableLoader.h"
 #include "ui/ui.h"
 
@@ -151,11 +151,7 @@ extern "C" void app_main(void) {
   ESP_ERROR_CHECK(lcd_display_brightness_set(100));
   ESP_ERROR_CHECK(lcd_display_rotate(lvgl_display, LV_DISPLAY_ROTATION_90));
 
-  if (global_loader) {
-    ui_init(*global_loader);
-  } else {
-    ui_error_screen("Error", "Failed to load data from microSD card.");
-  }
+  ui_init(*global_loader);
 
   while (1) {
     vTaskDelay(1000 / portTICK_PERIOD_MS);
