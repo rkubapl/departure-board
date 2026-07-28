@@ -1,3 +1,4 @@
+Cross-platform public transit departure board built with LVGL. Designed to run natively on embedded hardware via ESP-IDF (ESP32) and on desktop environments (Linux, macOS, Windows) using SDL2.
 ## Build for PC
 Tested on macOS using GCC 15. 
 - Pull submodules (lvgl): `git submodule update --init --recursive` or clone lvgl repository `git clone https://github.com/lvgl/lvgl`
